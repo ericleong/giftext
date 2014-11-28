@@ -1,0 +1,103 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<title>3Dtexter</title>
+
+	<link rel="stylesheet" type="text/css" href="css/reset.css">
+	<link rel="stylesheet" type="text/css" href="css/jquery.minicolors.css">
+	<link rel="stylesheet" type="text/css" href="css/style.css">
+</head>
+
+<body>
+	<div id="main">
+		<div id="top">
+			<div id="header">
+				<h1>3Dtexter</h1>
+				<a href="https://github.com/ericleong/3dtexter">github</a>
+			</div>
+		</div>
+
+		<div class="preview">
+			<canvas id="text_container" width="800" height="300">
+		</div>
+		<div id="input_text">
+			<input type="text" id="text" maxlength="30" placeholder="type text here" value="hello world"/>
+			<button type="button" id="start">start</button>
+		</div>
+		<div id="axis">
+			<button type="button" id="wave" class="selected">wave</button>
+			<button type="button" id="spin">spin</button>
+			<button type="button" id="axis_x">flip</button>
+			<button type="button" id="axis_y">rotate</button>
+		</div>
+		<div id="fonts">
+			<div data-font="helvetiker" style="font-family: helvetiker;" class="font typeface-js selected">
+				<div class="text">Aa</div>
+				<div class="font_title">Helvetiker</div>
+			</div>
+			<div data-font="gentilis" data-bold="true" class="font typeface-js">
+				<div style="font-family: gentilis; font-weight: bold;" class="text">Aa</div>
+				<div class="font_title">Gentilis</div>
+			</div>
+			<div data-font="droid sans" style="font-family: droid sans;" class="font typeface-js">
+				<div class="text typeface-js">Aa</div>
+				<div class="font_title">Droid Sans</div>
+			</div>
+			<div data-font="digital-7" style="font-family: digital-7;" class="font typeface-js">
+				<div class="text">Aa</div>
+				<div class="font_title">Digital 7</div>
+			</div>
+			<div data-font="varsity" style="font-family:varsity;" class="font typeface-js">
+				<div class="text">Aa</div>
+				<div class="font_title">Varsity</div>
+			</div>
+			<div data-font="viafont" style="font-family:viafont" class="font typeface-js">
+				<div class="text typeface-js">Aa</div>
+				<div class="font_title">Viafont</div>
+			</div>
+		</div>
+
+		<div id="colors">
+			<div class="form-group" id="primary">
+				<label for="primary-color">Primary Color</label>
+				<input type="text" id="primary-color" value="#3f6375" maxlength="7">
+			</div>
+			<div class="form-group" id="secondary">
+				<label for="secondary-color">Secondary Color</label>
+				<input type="text" id="secondary-color" value="#b85dd4" maxlength="7">
+			</div>
+			<div class="form-group" id="background">
+				<label for="background-color">Secondary Color</label>
+				<input type="checkbox" id="opaque" name="transparency" value="opaque" checked="true">
+				<input type="text" id="background-color" value="#ffffff" maxlength="7">
+			</div>
+		</div>
+		<button id="render"><span id="progress"></span><span id="render_text">Create GIF</span></button>
+		<img id="gif" />
+		<a id="download">Download GIF</a>
+	</div>
+
+	<script src="//cdnjs.cloudflare.com/ajax/libs/three.js/r69/three.min.js"></script>
+	<script src="js/gif-lib/gif.js"></script>
+	<script src="js/typeface-0.15.js"></script>
+	<script>_typeface_js.configure({ disableSelection: true })</script>
+
+	<!-- fonts -->
+	<script src="js/font/gentilis_bold.typeface.js"></script>
+	<script src="js/font/helvetiker_regular.typeface.js"></script>
+	<script src="js/font/droid_sans_regular.typeface.js"></script>
+	<script src="js/font/digital-7_regular.typeface.js"></script>
+	<script src="js/font/varsity_regular_varsity_regular.typeface.js"></script>
+	<script src="js/font/viafont_regular.typeface.js"></script>
+	<!-- end fonts -->
+
+	<script src="js/animator.js"></script>
+	<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+	<script src="js/jquery.minicolors.min.js"></script>
+	<script src="js/script.js"></script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+# Sublime
+*.sublime-project
+*.sublime-workspace
+
+# Mac
+*.DS_Store
+
+# Node
+node_modules

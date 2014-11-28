@@ -1,0 +1,36 @@
+{
+  "name": "giftext",
+  "version": "0.0.1",
+  "description": "Animated 3d text generator.",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ericleong/giftext.git"
+  },
+  "engines": {
+    "node": ">=0.10"
+  },
+  "keywords": [
+    "animated",
+    "gif"
+  ],
+  "author": "Eric Leong",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ericleong/giftext/issues"
+  },
+  "homepage": "https://github.com/ericleong/giftext",
+  "dependencies": {
+    "canvas": "^1.1.6",
+    "color": "^0.7.3",
+    "express": "^4.10.2",
+    "gifencoder": "^1.0.5",
+    "lru-cache": "^2.5.0",
+    "stream-buffers": "^1.1.0",
+    "three": "^0.69.0"
+  }
+}
