@@ -7,8 +7,9 @@ var Color = require('color')
 var ThreeDTexter = require('./animator.js');
 
 var streamBuffers = require('stream-buffers');
-var lru = require('lru-cache');
-var cache = lru(10);
+
+var memjs = require('memjs');
+var client = memjs.Client.create();
 
 var generating = {}; // pub/sub exposing pub existence
 
@@ -30,17 +31,19 @@ app.get('/:text', function (req, res) {
 var server = app.listen(process.env.PORT || 8080);
 
 function gif(res, text) {
-	if (cache.has(text)) {
-		res.setHeader('content-type', 'image/gif');
-		res.end(cache.get(text));
-	} else if (generating[text]) {
-		generating[text].push(function() {
+	client.get(text, function(err, val) {
+		if (val) {
 			res.setHeader('content-type', 'image/gif');
-			res.end(cache.get(text));
-		});
-	} else {
-		render(res, text, 400, 150);
-	}
+			res.end(val);
+		} else if (generating[text]) {
+			generating[text].push(function(result) {
+				res.setHeader('content-type', 'image/gif');
+				res.end(result);
+			});
+		} else {
+			render(res, text, 400, 150);
+		}
+	});
 }
 
 function render(res, text, width, height) {
@@ -76,12 +79,12 @@ function render(res, text, width, height) {
 
 	stream.on('end', function() {
 		// cache the result
-		cache.set(text, buffer.getContents());
+		client.set(text, buffer.getContents(), null, 600);
 
 		// notify subscribers
 		if (generating[text] && generating[text].length > 0) {
 			for (var listener in generating[text]) {
-				generating[text][listener]();
+				generating[text][listener](buffer.getContents());
 			}
 		}
 

@@ -29,7 +29,7 @@
     "color": "^0.7.3",
     "express": "^4.10.2",
     "gifencoder": "^1.0.5",
-    "lru-cache": "^2.5.0",
+    "memjs": "^0.8.5",
     "stream-buffers": "^1.1.0",
     "three": "^0.69.0"
   }
