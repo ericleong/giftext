@@ -17,7 +17,7 @@ var express = require('express');
 var app = express();
 
 app.get('/', function (req, res) {
-	res.redirect('/3dtexter.gif');
+	res.redirect('/giftext.gif');
 });
 
 app.get('/:text.gif', function (req, res) {
