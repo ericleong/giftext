@@ -7,6 +7,7 @@ if (typeof THREE === 'undefined') {
 }
 
 var child_process = require('child_process');
+var async = require('async');
 
 function ThreeDTexter(canvas){
 
@@ -271,10 +272,6 @@ function ThreeDTexter(canvas){
 	};
 
 	this.api.serve = function(gifsicle, width, height){
-		var wasAnimating = opts.rotating;
-
-		self.stop();
-
 		opts.mesh.rotation.x = 0;
 		opts.mesh.rotation.y = 0;
 
@@ -302,17 +299,36 @@ function ThreeDTexter(canvas){
 			opts.group.rotation.y = -Math.PI / 2;
 		}
 
-		render();
+		gifsicle.setMaxListeners(numFrames + 1);
 
-		var pixels = new Buffer(width * height * 3);
+		function run_capture(frame, callback){
+			var value = startValue + frame * dAngle;
 
-		function run_capture(){
+			if (opts.axis == 'x') {
+				opts.group.rotation.x = value;
+			} else if (opts.axis == 'y') {
+				opts.group.rotation.y = value;
+			} else if (opts.axis == 'wave') {
+				opts.wavePosition = value;
+
+				for (var i = 0; i < opts.mesh.children.length; i++) {
+					opts.mesh.children[i].position.y = opts.text.options.size * Math.sin(opts.wavePosition + opts.waveAngle * i);
+				}
+			} else if (opts.axis == 'spin') {
+				for (var i = 0; i < opts.mesh.children.length; i++) {
+					opts.mesh.children[i].rotation.y = value;
+				}
+			}
+
+			render();
+
 			var encoder = child_process.spawn('rgb2gif', ['-s', width, height], {
 				stdio: ['pipe', 'pipe', process.stderr]});
 			// don't close the gifsicle input stream when this gif is done
-			encoder.stdout.pipe(gifsicle.stdin, { end: false });
+			encoder.stdout.pipe(gifsicle.stdin, { end: frame <= 0 });
 
 			var data = opts.canvas.getContext('2d').getImageData(0, 0, width, height).data;
+			var pixels = new Buffer(width * height * 3);
 
 			var count = 0;
 			for (var i = 0; i < height; i++) {
@@ -324,40 +340,32 @@ function ThreeDTexter(canvas){
 				}
 			}
 			encoder.stdin.write(pixels);
-		
-			if (opts.axis == 'x') {
-				opts.group.rotation.x += dAngle;
-			} else if (opts.axis == 'y') {
-				opts.group.rotation.y += dAngle;
-			} else if (opts.axis == 'wave') {
-				opts.wavePosition += dAngle;
 
-				for (var i = 0; i < opts.mesh.children.length; i++) {
-					opts.mesh.children[i].position.y = opts.text.options.size * Math.sin(opts.wavePosition + opts.waveAngle * i);
-				}
-			} else if (opts.axis == 'spin') {
-				for (var i = 0; i < opts.mesh.children.length; i++) {
-					opts.mesh.children[i].rotation.y += dAngle;
-				}
-			}
-
-			render();
-
-			setTimeout(function(){
-				if (numFrames-- > 0){
-					run_capture();
-				} else {
-					if (wasAnimating) {
-						opts.rotating = true;
-						self.animate();
-					}
-
-					gifsicle.stdin.end();
-				}
-			}, 0);
+			callback();
 		}
 
-		run_capture();
+		var startValue = 0;
+
+		if (opts.axis == 'x') {
+			startValue = opts.group.rotation.x;
+		} else if (opts.axis == 'y') {
+			startValue = opts.group.rotation.y;
+		} else if (opts.axis == 'wave') {
+			startValue = opts.wavePosition;
+		} else if (opts.axis == 'spin') {
+			for (var i = 0; i < opts.mesh.children.length; i++) {
+				startValue = opts.mesh.children[i].rotation.y;
+				break;
+			}
+		}
+
+		var frames = [];
+
+		for (var frame = 0; frame <= numFrames + 1; frame++) {
+			frames.push(frame);
+		}
+
+		async.each(frames, run_capture);
 	}
 
 	this.reset = function() {
