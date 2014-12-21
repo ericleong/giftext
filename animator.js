@@ -6,6 +6,8 @@ if (typeof THREE === 'undefined') {
 	THREE.FontUtils.loadFace(require('./three/font/helvetiker_regular.typeface.js'));
 }
 
+var child_process = require('child_process');
+
 function ThreeDTexter(canvas){
 
 	this.api = {version: 0.1};
@@ -268,73 +270,7 @@ function ThreeDTexter(canvas){
 		render();
 	};
 
-	this.api.capture = function(gif, progress){
-		var wasAnimating = opts.rotating;
-
-		self.stop();
-
-		opts.mesh.rotation.x = 0;
-		opts.mesh.rotation.y = 0;
-
-		opts.wavePosition = 0;
-		if (opts.axis == 'wave') {
-			for (var i = 0; i < opts.mesh.children.length; i++) {
-				opts.mesh.children[i].position.y = opts.text.options.size * Math.sin(opts.wavePosition + opts.waveAngle * i);
-			}
-		} else if (opts.axis == 'spin') {
-			for (var i = 0; i < opts.mesh.children.length; i++) {
-				opts.mesh.children[i].rotation.y = 0;
-			}
-		}
-
-		render();
-
-		var numFrames = opts.numFrames;
-		var dAngle = 2 * Math.PI / (numFrames + 1);
-
-		function run_capture(){
-			console.log('capturing frame: ' + (opts.numFrames - numFrames));
-			gif.addFrame(opts.canvas, {copy: true, delay: opts.delay});
-		
-			if (opts.axis == 'x') {
-				opts.group.rotation.x += dAngle;
-			} else if (opts.axis == 'y') {
-				opts.group.rotation.y += dAngle;
-			} else if (opts.axis == 'wave') {
-				opts.wavePosition += dAngle;
-
-				for (var i = 0; i < opts.mesh.children.length; i++) {
-					opts.mesh.children[i].position.y = opts.text.options.size * Math.sin(opts.wavePosition + opts.waveAngle * i);
-				}
-			} else if (opts.axis == 'spin') {
-				for (var i = 0; i < opts.mesh.children.length; i++) {
-					opts.mesh.children[i].rotation.y += dAngle;
-				}
-			}
-
-			render();
-			if (progress) {
-				progress((opts.numFrames - numFrames + 1) / (opts.numFrames + 1));
-			}
-
-			setTimeout(function(){
-				if (numFrames-- > 0){
-					run_capture();
-				} else {
-					if (wasAnimating) {
-						opts.rotating = true;
-						self.animate();
-					}
-
-					gif.render();
-				}
-			}, opts.delay);
-		}
-
-		run_capture();
-	}
-
-	this.api.serve = function(encoder){
+	this.api.serve = function(gifsicle, width, height){
 		var wasAnimating = opts.rotating;
 
 		self.stop();
@@ -368,8 +304,26 @@ function ThreeDTexter(canvas){
 
 		render();
 
+		var pixels = new Buffer(width * height * 3);
+
 		function run_capture(){
-			encoder.addFrame(opts.canvas.getContext('2d'));
+			var encoder = child_process.spawn('rgb2gif', ['-s', width, height], {
+				stdio: ['pipe', 'pipe', process.stderr]});
+			// don't close the gifsicle input stream when this gif is done
+			encoder.stdout.pipe(gifsicle.stdin, { end: false });
+
+			var data = opts.canvas.getContext('2d').getImageData(0, 0, width, height).data;
+
+			var count = 0;
+			for (var i = 0; i < height; i++) {
+				for (var j = 0; j < width; j++) {
+					var b = (i * width * 4) + j * 4;
+					pixels.writeUInt8(data[b], count++, true);
+					pixels.writeUInt8(data[b+1], count++, true);
+					pixels.writeUInt8(data[b+2], count++, true);
+				}
+			}
+			encoder.stdin.write(pixels);
 		
 			if (opts.axis == 'x') {
 				opts.group.rotation.x += dAngle;
@@ -398,7 +352,7 @@ function ThreeDTexter(canvas){
 						self.animate();
 					}
 
-					encoder.finish();
+					gifsicle.stdin.end();
 				}
 			}, 0);
 		}

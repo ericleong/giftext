@@ -1,2 +1,3 @@
 https://github.com/mojodna/heroku-buildpack-cairo.git
+https://github.com/jc4p/heroku-buildpack-gifsicle.git
 https://github.com/heroku/heroku-buildpack-nodejs.git
