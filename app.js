@@ -50,7 +50,7 @@ function gif(res, text) {
 function render(res, text, width, height) {
 
 	generating[text] = [];
-	
+
 	var texter = ThreeDTexter(new Canvas(width, height));
 
 	var buffer = new streamBuffers.WritableStreamBuffer({

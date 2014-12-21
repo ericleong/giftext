@@ -247,30 +247,6 @@ function ThreeDTexter(canvas){
 		opts.renderer.render( opts.scene, opts.camera );
 	};
 
-	var animate = this.animate = function(){
-
-		if (opts.rotating) {
-			requestAnimationFrame(animate);
-			if (opts.axis == 'x') {
-				opts.group.rotation.x += opts.rotationRate;
-			} else if (opts.axis == 'y') {
-				opts.group.rotation.y += opts.rotationRate;
-			} else if (opts.axis == 'wave') {
-				opts.wavePosition += opts.rotationRate;
-
-				for (var i = 0; i < opts.mesh.children.length; i++) {
-					opts.mesh.children[i].position.y = opts.text.options.size * Math.sin(opts.wavePosition + opts.waveAngle * i);
-				}
-			} else if (opts.axis == 'spin') {
-				for (var i = 0; i < opts.mesh.children.length; i++) {
-					opts.mesh.children[i].rotation.y += opts.rotationRate;
-				}
-			}
-		}
-
-		render();
-	};
-
 	this.api.serve = function(gifsicle, width, height){
 		opts.mesh.rotation.x = 0;
 		opts.mesh.rotation.y = 0;
@@ -382,10 +358,7 @@ function ThreeDTexter(canvas){
    
 	// actually init
 	this.setup();
-	this.drawTextInternal('hello world');
 	this.setupCanvas();
-	this.render();
-	this.animate();
 
 	this.api.setText = function(text, options){
 		opts.group.remove(opts.text.canvas);
@@ -393,7 +366,6 @@ function ThreeDTexter(canvas){
 			self.drawTextInternal(text, options);
 			opts.group.add(opts.text.canvas);
 		}
-		self.render();
 	}
 	this.api.setTextOption = function(option, value){
 		self.opts.text.options[option] = value;
@@ -408,35 +380,10 @@ function ThreeDTexter(canvas){
 		opts.text.options.textColor = front;
 		opts.text.options.sideColor = side;
 
-		if (opts.axis == 'x' || opts.axis == 'y') {
-			opts.mesh.material.materials[0].color.setHex(side);
-			opts.mesh.material.materials[1].color.setHex(front);
-			opts.mesh.material.materials[0].ambient.setHex(side);
-			opts.mesh.material.materials[1].ambient.setHex(front);
-		} else if (opts.axis == 'wave' || opts.axis == 'spin') {
-			for (var i = 0; i < opts.mesh.children.length; i++) {
-				opts.mesh.children[i].material.materials[0].color.setHex(side);
-				opts.mesh.children[i].material.materials[1].color.setHex(front);
-				opts.mesh.children[i].material.materials[0].ambient.setHex(side);
-				opts.mesh.children[i].material.materials[1].ambient.setHex(front);
-			}
-		}
-
 		if (opaque) {
 			opts.renderer.setClearColor(background, 1);
 		} else {
 			opts.renderer.setClearColor(0xffffff, 0);
-		}
-
-		self.render();
-	}
-	this.api.toggleAnimation = function() {
-		opts.rotating = !opts.rotating;
-
-		if (!opts.rotating) {
-			self.stop();
-		} else {
-			self.animate();
 		}
 	}
 	this.api.isAnimating = function() {
