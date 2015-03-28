@@ -17,6 +17,18 @@ var generating = {}; // pub/sub exposing pub existence
 var express = require('express');
 var app = express();
 
+// set up config
+var config = {};
+try {
+	config = require('./config.json');
+} catch (err) {
+	// do nothing
+}
+config['rgb2gif'] = config['rgb2gif'] === undefined ? 'rgb2gif' : config['rgb2gif'];
+config['gifsicle'] = config['gifsicle'] === undefined ? 'gifsicle' : config['gifsicle'];
+
+// server routes
+
 app.get('/', function (req, res) {
 	res.redirect('/giftext.gif');
 });
@@ -51,7 +63,7 @@ function render(res, text, width, height) {
 
 	generating[text] = [];
 
-	var texter = ThreeDTexter(new Canvas(width, height));
+	var texter = ThreeDTexter(new Canvas(width, height), config['rgb2gif']);
 
 	var buffer = new streamBuffers.WritableStreamBuffer({
 		initialSize: 200 * 1024
@@ -75,7 +87,7 @@ function render(res, text, width, height) {
 	res.setHeader('content-type', 'image/gif');
 	res.setHeader('transfer-encoding', 'chunked');
 
-	var gifsicle = child_process.spawn('gifsicle', 
+	var gifsicle = child_process.spawn(config.gifsicle, 
 		['--multifile', '-d', 8, '--loopcount', '--colors', 256], {
 		stdio: ['pipe', 'pipe', process.stderr]});
 	gifsicle.stdout.pipe(res);

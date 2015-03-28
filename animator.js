@@ -9,7 +9,7 @@ if (typeof THREE === 'undefined') {
 var child_process = require('child_process');
 var async = require('async');
 
-function ThreeDTexter(canvas){
+function ThreeDTexter(canvas, rgb2gif) {
 
 	this.api = {version: 0.1};
 
@@ -231,11 +231,10 @@ function ThreeDTexter(canvas){
 	this.setupCanvas = function(){
 
 		opts.group = new THREE.Object3D();
-
-		opts.group.add(opts.text.canvas);
 		opts.scene.add(opts.group);
 
 		opts.canvas = canvas;
+		opts['rgb2gif'] = rgb2gif;
 
 		opts.renderer = new THREE.CanvasRenderer({
 			canvas: canvas,
@@ -298,7 +297,7 @@ function ThreeDTexter(canvas){
 
 			render();
 
-			var encoder = child_process.spawn('rgb2gif', ['-s', width, height], {
+			var encoder = child_process.spawn(opts['rgb2gif'], ['-s', width, height], {
 				stdio: ['pipe', 'pipe', process.stderr]});
 			// don't close the gifsicle input stream when this gif is done
 			encoder.stdout.pipe(gifsicle.stdin, { end: frame <= 0 });
@@ -398,8 +397,8 @@ function ThreeDTexter(canvas){
 	return self;
 };
 
-var create = function(canvas) {
-	return new ThreeDTexter(canvas);
+var create = function(canvas, rgb2gif) {
+	return new ThreeDTexter(canvas, rgb2gif);
 }
 
 module.exports = create;
