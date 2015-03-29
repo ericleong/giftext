@@ -127,6 +127,9 @@ function render(res, text, width, height) {
 
 	async.mapLimit(frames, numCPUs, function(frame, callback) {
 		var worker = workerPool.shift();
+		var buffer = new streamBuffers.WritableStreamBuffer({
+			initialSize: 100 * 1024
+		});
 
 		if (!worker) {
 			worker = child_process.spawn(
@@ -138,10 +141,12 @@ function render(res, text, width, height) {
 			);
 		}
 
+		worker.stdout.pipe(buffer);
+
 		var listener = function(response) {
 			worker.removeListener('message', listener);
 			workerPool.push(worker);
-			callback(null, response);
+			callback(null, buffer.getContents());
 		}
 
 		worker.on('message', listener);
@@ -153,7 +158,7 @@ function render(res, text, width, height) {
 	}, function(err, results) {
 
 		for (var r = 0; r < results.length; r++) {
-			gifsicle.stdin.write(results[r], 'hex');
+			gifsicle.stdin.write(results[r]);
 		}
 
 		gifsicle.stdin.end();

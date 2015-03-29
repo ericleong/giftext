@@ -7,7 +7,7 @@ process.on('message', function(message) {
 	texter.api.setAxis(message.options.axis);
 	texter.api.setText(message.options.text);
 
-	texter.api.serve(message.options.width, message.options.height, message.frame, function(buffer) {
-		process.send(buffer);
+	texter.api.serve(message.options.width, message.options.height, message.frame, process.stdout, function() {
+		process.send(message.frame);
 	});
 });
