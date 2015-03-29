@@ -247,6 +247,8 @@ function ThreeDTexter(canvas, rgb2gif) {
 	};
 
 	this.api.serve = function(gifsicle, width, height){
+		var pixels = new Buffer(width * height * 3);
+
 		opts.mesh.rotation.x = 0;
 		opts.mesh.rotation.y = 0;
 
@@ -303,7 +305,6 @@ function ThreeDTexter(canvas, rgb2gif) {
 			encoder.stdout.pipe(gifsicle.stdin, { end: frame <= 0 });
 
 			var data = opts.canvas.getContext('2d').getImageData(0, 0, width, height).data;
-			var pixels = new Buffer(width * height * 3);
 
 			var count = 0;
 			for (var i = 0; i < height; i++) {
