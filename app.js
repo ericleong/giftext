@@ -1,11 +1,9 @@
 'use strict';
 
-var Canvas = require('canvas');
-
 var child_process = require('child_process');
 
 var Color = require('color');
-var ThreeDTexter = require('./animator.js');
+var async = require('async');
 
 var streamBuffers = require('stream-buffers');
 
@@ -26,6 +24,9 @@ try {
 }
 config['rgb2gif'] = config['rgb2gif'] === undefined ? 'rgb2gif' : config['rgb2gif'];
 config['gifsicle'] = config['gifsicle'] === undefined ? 'gifsicle' : config['gifsicle'];
+
+var numCPUs = require('os').cpus().length;
+var workerPool = [];
 
 // server routes
 
@@ -63,8 +64,6 @@ function render(res, text, width, height) {
 
 	generating[text] = [];
 
-	var texter = ThreeDTexter(new Canvas(width, height), config['rgb2gif']);
-
 	var buffer = new streamBuffers.WritableStreamBuffer({
 		initialSize: 200 * 1024
 	});
@@ -75,13 +74,6 @@ function render(res, text, width, height) {
 	// colors
 	var front = Color().hsv(hue, 100, 95);
 	var side = Color().hsv((hue + 30 * Math.random() + 165) % 360, 80, 80);
-	texter.api.setColor(front.rgbNumber(), side.rgbNumber(), 0xffffff, true);
-
-	// axis
-	texter.api.setAxis(Math.random() > 0.5 ? 'y' : 'wave');
-
-	// text
-	texter.api.setText(text);
 
 	// stream the results as they are available
 	res.setHeader('content-type', 'image/gif');
@@ -94,13 +86,19 @@ function render(res, text, width, height) {
 	gifsicle.stdout.pipe(buffer);
 
 	gifsicle.stdout.on('end', function() {
-		// cache the result
-		client.set(text, buffer.getContents(), null, 600);
+		var contents;
+
+		if (buffer && buffer.size() > 0) {
+			contents = buffer.getContents();
+
+			// cache the result
+			client.set(text, contents, null, 600);
+		}
 
 		// notify subscribers
 		if (generating[text] && generating[text].length > 0) {
 			for (var listener in generating[text]) {
-				generating[text][listener](buffer.getContents());
+				generating[text][listener](contents);
 			}
 		}
 
@@ -108,5 +106,56 @@ function render(res, text, width, height) {
 		generating[text] = null;
 	});
 
-	texter.api.serve(gifsicle, width, height);
+	var options = {
+		color: {
+			front: front.rgbNumber(),
+			side: side.rgbNumber(), 
+			background: 0xffffff, 
+			opaque: true
+		},
+		text: text,
+		axis: Math.random() > 0.5 ? 'y' : 'wave',
+		width: width,
+		height: height
+	};
+
+	var frames = [];
+
+	for (var frame = 0; frame <= 23; frame++) {
+		frames.push(frame);
+	}
+
+	async.mapLimit(frames, numCPUs, function(frame, callback) {
+		var worker = workerPool.shift();
+
+		if (!worker) {
+			worker = child_process.spawn(
+				'node',
+				['./worker.js', config['rgb2gif']],
+				{
+					stdio: ['ipc', 'pipe', process.stderr]
+				}
+			);
+		}
+
+		var listener = function(response) {
+			worker.removeListener('message', listener);
+			workerPool.push(worker);
+			callback(null, response);
+		}
+
+		worker.on('message', listener);
+
+		worker.send({
+			options: options,
+			frame: frame
+		});
+	}, function(err, results) {
+
+		for (var r = 0; r < results.length; r++) {
+			gifsicle.stdin.write(results[r], 'hex');
+		}
+
+		gifsicle.stdin.end();
+	});
 }
