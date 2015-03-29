@@ -1,3 +1,5 @@
+'use strict';
+
 var ThreeDTexter = require('./animator.js');
 var Canvas = require('canvas');
 var texter = ThreeDTexter(new Canvas(400, 150), process.argv[2]);
