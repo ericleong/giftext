@@ -353,10 +353,14 @@ function ThreeDTexter(canvas, rgb2gif) {
 	this.setupCanvas();
 
 	this.api.setText = function(text, options){
-		opts.group.remove(opts.text.canvas);
-		if (text != null && text.length > 0) {
-			self.drawTextInternal(text, options);
-			opts.group.add(opts.text.canvas);
+		if (opts.text.text != text) {
+			opts.text.text = text;
+
+			opts.group.remove(opts.text.canvas);
+			if (text != null && text.length > 0) {
+				self.drawTextInternal(text, options);
+				opts.group.add(opts.text.canvas);
+			}
 		}
 	}
 	this.api.setTextOption = function(option, value){
@@ -382,9 +386,11 @@ function ThreeDTexter(canvas, rgb2gif) {
 		return opts.rotating;
 	}
 	this.api.setAxis = function(axis) {
-		self.reset();
+		if (axis != opts.axis) {
+			self.reset();
 
-		opts.axis = axis;
+			opts.axis = axis;
+		}
 	}
 
 	return self;

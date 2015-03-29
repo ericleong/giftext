@@ -128,7 +128,7 @@ function render(res, text, width, height) {
 	async.mapLimit(frames, numCPUs, function(frame, callback) {
 		var worker = workerPool.shift();
 		var buffer = new streamBuffers.WritableStreamBuffer({
-			initialSize: 100 * 1024
+			initialSize: 200 * 1024
 		});
 
 		if (!worker) {
