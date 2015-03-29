@@ -1,0 +1,9 @@
+{
+  "name": "giftext",
+  "description": "A server-side animated text gif renderer.",
+  "repository": "https://github.com/ericleong/giftext",
+  "logo": "http://giftext.io/giftext.gif",
+  "website": "http://giftext.io",
+  "addons": ["memcachier"],
+  "keywords": ["node", "express", "gif", "animated text"]
+}
