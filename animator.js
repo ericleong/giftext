@@ -248,6 +248,15 @@ function ThreeDTexter(canvas, rgb2gif) {
 
 	this.api.serve = function(width, height, frame, out, callback){
 
+		var encoder = child_process.spawn(opts['rgb2gif'], ['-s', width, height], {
+			stdio: ['pipe', 'pipe', process.stderr]});
+
+		encoder.stdout.pipe(out);
+
+		encoder.stdout.on('end', function() {
+			callback();
+		});
+
 		opts.mesh.rotation.x = 0;
 		opts.mesh.rotation.y = 0;
 
@@ -309,15 +318,6 @@ function ThreeDTexter(canvas, rgb2gif) {
 		}
 
 		render();
-
-		var encoder = child_process.spawn(opts['rgb2gif'], ['-s', width, height], {
-			stdio: ['pipe', 'pipe', process.stderr]});
-
-		encoder.stdout.pipe(out);
-
-		encoder.stdout.on('end', function() {
-			callback();
-		});
 
 		var data = opts.canvas.getContext('2d').getImageData(0, 0, width, height).data;
 
