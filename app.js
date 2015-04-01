@@ -35,7 +35,7 @@ app.get('/', function (req, res) {
 });
 
 app.get('/:text.gif', function (req, res) {
-	gif(res, req.params.text);
+	gif(res, req.params.text.replace('+', ' '));
 });
 
 app.get('/:text', function (req, res) {
