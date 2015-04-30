@@ -1,3 +1,4 @@
+/// <reference path="typings/node/node.d.ts"/>
 'use strict';
 
 var child_process = require('child_process');
@@ -80,7 +81,7 @@ function render(res, text, width, height) {
 	res.setHeader('transfer-encoding', 'chunked');
 
 	var gifsicle = child_process.spawn(config.gifsicle, 
-		['--multifile', '-d', 8, '--loopcount', '--colors', 256], {
+		['--multifile', '-d', '8', '--loopcount', '--colors', '256'], {
 		stdio: ['pipe', 'pipe', process.stderr]});
 	gifsicle.stdout.pipe(res);
 	gifsicle.stdout.pipe(buffer);
@@ -147,7 +148,7 @@ function render(res, text, width, height) {
 			worker.removeListener('message', listener);
 			workerPool.push(worker);
 			callback(null, buffer.getContents());
-		}
+		};
 
 		worker.on('message', listener);
 

@@ -44,8 +44,6 @@ function ThreeDTexter(canvas, rgb2gif) {
 		axis: 'wave'
 	};
 
-	var exports = {};
-
 	this.setup = function(){
 		opts.camera = new THREE.PerspectiveCamera( 60, 2, 50, 2000 );
 		opts.camera.position.set( 0, 0, 500 );
@@ -57,7 +55,7 @@ function ThreeDTexter(canvas, rgb2gif) {
 		var dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
 		dirLight.position.set(0.25, 1, 0).normalize();
 		opts.scene.add(dirLight);
-	}
+	};
 
 	this.drawTextInternal = function(text, text_options){
 
@@ -224,7 +222,7 @@ function ThreeDTexter(canvas, rgb2gif) {
 				opts.mesh.children[i].rotation.y = 0;
 			}
 		}
-	}
+	};
 
 	var self = this;
 
@@ -334,19 +332,19 @@ function ThreeDTexter(canvas, rgb2gif) {
 		}
 
 		encoder.stdin.end(pixels);
-	}
+	};
 
 	this.reset = function() {
 		opts.group.rotation.x = 0;
 		opts.group.rotation.y = 0;
-	}
+	};
 
 	this.stop = function() {
 		self.reset();
 		opts.rotating = false;
 
 		render();
-	}
+	};
    
 	// actually init
 	this.setup();
@@ -362,16 +360,16 @@ function ThreeDTexter(canvas, rgb2gif) {
 				opts.group.add(opts.text.canvas);
 			}
 		}
-	}
+	};
 	this.api.setTextOption = function(option, value){
 		self.opts.text.options[option] = value;
-	}
+	};
 	this.api.getTextOption = function(option){
 		return self.opts.text.options[option];
-	}
+	};
 	this.api.getTextOptions = function(){
 		return self.opts.text.options;
-	}
+	};
 	this.api.setColor = function(front, side, background, opaque) {
 		opts.text.options.textColor = front;
 		opts.text.options.sideColor = side;
@@ -381,23 +379,21 @@ function ThreeDTexter(canvas, rgb2gif) {
 		} else {
 			opts.renderer.setClearColor(0xffffff, 0);
 		}
-	}
+	};
 	this.api.isAnimating = function() {
 		return opts.rotating;
-	}
+	};
 	this.api.setAxis = function(axis) {
 		if (axis != opts.axis) {
 			self.reset();
 
 			opts.axis = axis;
 		}
-	}
-
-	return self;
+	};
 };
 
 var create = function(canvas, rgb2gif) {
 	return new ThreeDTexter(canvas, rgb2gif);
-}
+};
 
 module.exports = create;
