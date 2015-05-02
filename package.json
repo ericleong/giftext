@@ -26,11 +26,11 @@
   "homepage": "https://github.com/ericleong/giftext",
   "dependencies": {
     "async": "^0.9.0",
-    "canvas": "~1.1.6",
+    "canvas": "^1.2.2",
     "color": "^0.7.3",
     "express": "^4.12.3",
     "memjs": "^0.8.5",
     "stream-buffers": "^1.1.0",
-    "three": "^0.69.0"
+    "three": "^0.71.0"
   }
 }

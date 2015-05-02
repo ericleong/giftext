@@ -1,3 +1,4 @@
+/// <reference path="typings/node/node.d.ts"/>
 'use strict';
 
 if (typeof THREE === 'undefined') {
