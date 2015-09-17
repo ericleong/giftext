@@ -12,7 +12,7 @@
     "url": "https://github.com/ericleong/giftext.git"
   },
   "engines": {
-    "node": ">=0.12"
+    "node": ">=4.0"
   },
   "keywords": [
     "animated",
@@ -25,12 +25,12 @@
   },
   "homepage": "https://github.com/ericleong/giftext",
   "dependencies": {
-    "async": "^0.9.0",
-    "canvas": "^1.2.2",
+    "async": "^0.9.2",
+    "canvas": "^1.2.9",
     "color": "^0.7.3",
-    "express": "^4.12.3",
-    "memjs": "^0.8.5",
-    "stream-buffers": "^1.1.0",
-    "three": "^0.71.0"
+    "express": "^4.13.3",
+    "memjs": "^0.8.6",
+    "stream-buffers": "^2.2.0",
+    "three": "^0.71.1"
   }
 }

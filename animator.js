@@ -8,7 +8,6 @@ if (typeof THREE === 'undefined') {
 }
 
 var child_process = require('child_process');
-var streamBuffers = require('stream-buffers');
 
 function ThreeDTexter(canvas, rgb2gif) {
 
