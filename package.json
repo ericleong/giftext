@@ -12,7 +12,7 @@
     "url": "https://github.com/ericleong/giftext.git"
   },
   "engines": {
-    "node": ">=4.0"
+    "node": ">=4.1"
   },
   "keywords": [
     "animated",

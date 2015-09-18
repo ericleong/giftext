@@ -8,4 +8,7 @@
 # Node
 node_modules
 
+# Visual Studio Code
+.vscode/
+
 config.json
