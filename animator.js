@@ -11,8 +11,6 @@ var child_process = require('child_process');
 
 function ThreeDTexter(canvas, rgb2gif) {
 
-	this.api = {version: 0.1};
-
 	var opts = this.opts = {
 		camera: null,
 		group: null,
@@ -25,8 +23,6 @@ function ThreeDTexter(canvas, rgb2gif) {
 				height: 50,
 				hover: 10,
 				curveSegments: 5,
-				bevelThickness: 4,
-				bevelSize: 2,
 				bevelEnabled: false,
 				font: 'helvetiker',
 				weight: 'normal',
@@ -38,7 +34,6 @@ function ThreeDTexter(canvas, rgb2gif) {
 		wavePosition: 0,
 		waveAngle: Math.PI / 6,
 		rotationRate: Math.PI / 60,
-		rotating: false,
 		numFrames: 23,
 		delay: 84,
 		axis: 'wave'
@@ -121,7 +116,7 @@ function ThreeDTexter(canvas, rgb2gif) {
 			text3d.translateX(-0.5 * width);
 			opts.mesh = text3d;
 
-			this.setAxis(opts.axis);
+			this.setAnimation(opts.axis);
 			
 			opts.text.canvas = text3d;
 		} else {
@@ -170,7 +165,7 @@ function ThreeDTexter(canvas, rgb2gif) {
 				}
 			}
 
-			this.setAxis(opts.axis);
+			this.setAnimation(opts.axis);
 
 			opts.text.canvas = opts.mesh;
 		}
@@ -197,7 +192,7 @@ function ThreeDTexter(canvas, rgb2gif) {
 		});
 	};
 
-	this.setAxis = function(axis) {
+	this.setAnimation = function(axis) {
 		if (axis == 'x') {
 			opts.camera.position.set(0, 0, opts.width);
 
@@ -240,11 +235,7 @@ function ThreeDTexter(canvas, rgb2gif) {
 		});
 	};
 	
-	var render = this.render = function(){
-		opts.renderer.render( opts.scene, opts.camera );
-	};
-
-	this.api.serve = function(width, height, frame, out, callback){
+	this.serve = function(width, height, frame, out, callback){
 
 		var encoder = child_process.spawn(opts['rgb2gif'], ['-s', width, height], {
 			stdio: ['pipe', 'pipe', process.stderr]});
@@ -315,7 +306,7 @@ function ThreeDTexter(canvas, rgb2gif) {
 			}
 		}
 
-		render();
+		opts.renderer.render(opts.scene, opts.camera);
 
 		var data = opts.canvas.getContext('2d').getImageData(0, 0, width, height).data;
 
@@ -338,19 +329,12 @@ function ThreeDTexter(canvas, rgb2gif) {
 		opts.group.rotation.x = 0;
 		opts.group.rotation.y = 0;
 	};
-
-	this.stop = function() {
-		self.reset();
-		opts.rotating = false;
-
-		render();
-	};
    
 	// actually init
 	this.setup();
 	this.setupCanvas();
 
-	this.api.setText = function(text, options){
+	this.setText = function(text, options){
 		if (opts.text.text != text) {
 			opts.text.text = text;
 
@@ -361,16 +345,7 @@ function ThreeDTexter(canvas, rgb2gif) {
 			}
 		}
 	};
-	this.api.setTextOption = function(option, value){
-		self.opts.text.options[option] = value;
-	};
-	this.api.getTextOption = function(option){
-		return self.opts.text.options[option];
-	};
-	this.api.getTextOptions = function(){
-		return self.opts.text.options;
-	};
-	this.api.setColor = function(front, side, background, opaque) {
+	this.setColor = function(front, side, background, opaque) {
 		opts.text.options.textColor = front;
 		opts.text.options.sideColor = side;
 
@@ -380,10 +355,7 @@ function ThreeDTexter(canvas, rgb2gif) {
 			opts.renderer.setClearColor(0xffffff, 0);
 		}
 	};
-	this.api.isAnimating = function() {
-		return opts.rotating;
-	};
-	this.api.setAxis = function(axis) {
+	this.setAxis = function(axis) {
 		if (axis != opts.axis) {
 			self.reset();
 
