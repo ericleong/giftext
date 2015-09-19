@@ -22,7 +22,7 @@ function ThreeDTexter(canvas, rgb2gif) {
 				size: 100,
 				height: 50,
 				hover: 10,
-				curveSegments: 5,
+				curveSegments: 4,
 				bevelEnabled: false,
 				font: 'helvetiker',
 				weight: 'normal',
@@ -71,6 +71,16 @@ function ThreeDTexter(canvas, rgb2gif) {
 
 		var materials = [opts.text.options.sideMaterial, opts.text.options.textMaterial];
 		opts.text.options.material = new THREE.MeshFaceMaterial(materials);
+		
+		// cache alphanumeric characters
+		opts.text.alphanumeric = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+		opts.text.cache = {};
+		
+		for (var i = 0; i < opts.text.alphanumeric.length; i++) {
+			var letter = opts.text.alphanumeric[i];
+			opts.text.cache[letter] = new THREE.TextGeometry(letter, opts.text.options);
+			opts.text.cache[letter].computeBoundingBox();
+		}
 	};
 
 	this.drawTextInternal = function(text, text_options){
@@ -103,17 +113,20 @@ function ThreeDTexter(canvas, rgb2gif) {
 					continue;
 				}
 
-				var letter3d = new THREE.TextGeometry(text[i], opts.text.options);
+				var letter3d;
+				var index = opts.text.alphanumeric.indexOf(text[i]);
+				if (index >= 0) {
+					letter3d = opts.text.cache[text[i]].clone();
+				} else {
+					letter3d = new THREE.TextGeometry(text[i], opts.text.options);
+				}
 				letter3d.computeBoundingBox();
-
-				letter3d.applyMatrix(new THREE.Matrix4().makeTranslation(
-					-0.5 * (letter3d.boundingBox.max.x - letter3d.boundingBox.min.x), 0, 
-					-opts.text.options.height / 2) );
 
 				opts.verticalOffset = -0.5 * (letter3d.boundingBox.max.y - letter3d.boundingBox.min.y);
 
-				var mesh = new THREE.Mesh(letter3d,  opts.text.options.material);
-				mesh.position.x = width + 0.5 * (letter3d.boundingBox.max.x - letter3d.boundingBox.min.x);
+				var mesh = new THREE.Mesh(letter3d, opts.text.options.material);
+				mesh.position.x = width;
+				mesh.position.z = -opts.text.options.height / 2;
 
 				width += offset * 2;
 
