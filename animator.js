@@ -50,6 +50,27 @@ function ThreeDTexter(canvas, rgb2gif) {
 		var dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
 		dirLight.position.set(0.25, 1, 0).normalize();
 		opts.scene.add(dirLight);
+		
+		// material
+		opts.text.options.textMaterial = new THREE.MeshPhongMaterial({
+			color: opts.text.options.textColor,
+			shading: THREE.FlatShading,
+			specular: 0x222222,
+			shininess: 50,
+			ambient: opts.text.options.textColor,
+			overdraw: 0.4
+		});
+		opts.text.options.sideMaterial = new THREE.MeshPhongMaterial({
+			color: opts.text.options.sideColor,
+			shading: THREE.SmoothShading,
+			specular: 0x222222,
+			shininess: 50,
+			ambient: opts.text.options.sideColor,
+			overdraw: 0.4
+		});
+
+		var materials = [opts.text.options.sideMaterial, opts.text.options.textMaterial];
+		opts.text.options.material = new THREE.MeshFaceMaterial(materials);
 	};
 
 	this.drawTextInternal = function(text, text_options){
@@ -59,12 +80,6 @@ function ThreeDTexter(canvas, rgb2gif) {
 				opts.text.options[opt] = text_options[opt];
 			}
 		}
-
-		// material
-		this.makeMaterial();
-
-		var materials = [opts.text.options.sideMaterial, opts.text.options.textMaterial];
-		var material = new THREE.MeshFaceMaterial(materials);
 
 		// text
 		if (opts.axis == 'wave' || opts.axis == 'spin') {
@@ -97,7 +112,7 @@ function ThreeDTexter(canvas, rgb2gif) {
 
 				opts.verticalOffset = -0.5 * (letter3d.boundingBox.max.y - letter3d.boundingBox.min.y);
 
-				var mesh = new THREE.Mesh(letter3d,  material);
+				var mesh = new THREE.Mesh(letter3d,  opts.text.options.material);
 				mesh.position.x = width + 0.5 * (letter3d.boundingBox.max.x - letter3d.boundingBox.min.x);
 
 				width += offset * 2;
@@ -155,7 +170,7 @@ function ThreeDTexter(canvas, rgb2gif) {
 
 			opts.width = Math.min(Math.max(0.5 * (text3d.boundingBox.max.x - text3d.boundingBox.min.x), 500), 1000);
 
-			opts.mesh = new THREE.Mesh(text3d,  material);
+			opts.mesh = new THREE.Mesh(text3d,  opts.text.options.material);
 
 			opts.mesh.position.x = centerOffset;
 
@@ -171,25 +186,6 @@ function ThreeDTexter(canvas, rgb2gif) {
 		}
 		
 		return text;
-	};
-
-	this.makeMaterial = function(){
-		opts.text.options.textMaterial = new THREE.MeshPhongMaterial({
-			color: opts.text.options.textColor,
-			shading: THREE.FlatShading,
-			specular: 0x222222,
-			shininess: 50,
-			ambient: opts.text.options.textColor,
-			overdraw: 0.4
-		});
-		opts.text.options.sideMaterial = new THREE.MeshPhongMaterial({
-			color: opts.text.options.sideColor,
-			shading: THREE.SmoothShading,
-			specular: 0x222222,
-			shininess: 50,
-			ambient: opts.text.options.sideColor,
-			overdraw: 0.4
-		});
 	};
 
 	this.setAnimation = function(axis) {
@@ -348,6 +344,11 @@ function ThreeDTexter(canvas, rgb2gif) {
 	this.setColor = function(front, side, background, opaque) {
 		opts.text.options.textColor = front;
 		opts.text.options.sideColor = side;
+
+		opts.text.options.textMaterial.color = new THREE.Color(front);
+		opts.text.options.textMaterial.ambient = new THREE.Color(front);
+		opts.text.options.sideMaterial.color = new THREE.Color(side);
+		opts.text.options.sideMaterial.ambient = new THREE.Color(side);
 
 		if (opaque) {
 			opts.renderer.setClearColor(background, 1);
