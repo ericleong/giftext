@@ -322,13 +322,10 @@ function ThreeDTexter(canvas, rgb2gif) {
 		var pixels = new Buffer(width * height * 3);
 
 		var count = 0;
-		for (var i = 0; i < height; i++) {
-			for (var j = 0; j < width; j++) {
-				var b = (i * width * 4) + j * 4;
-				pixels.writeUInt8(data[b], count++, true);
-				pixels.writeUInt8(data[b+1], count++, true);
-				pixels.writeUInt8(data[b+2], count++, true);
-			}
+		for (var i = 0; i < height * width * 4; i += 4) {
+			pixels.writeUInt8(data[i], count++, true);
+			pixels.writeUInt8(data[i+1], count++, true);
+			pixels.writeUInt8(data[i+2], count++, true);
 		}
 
 		encoder.stdin.end(pixels);
