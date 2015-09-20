@@ -9,7 +9,7 @@ if (typeof THREE === 'undefined') {
 
 var child_process = require('child_process');
 
-function ThreeDTexter(canvas, rgb2gif) {
+function ThreeDTexter(canvas) {
 
 	var opts = this.opts = {
 		camera: null,
@@ -236,7 +236,6 @@ function ThreeDTexter(canvas, rgb2gif) {
 		opts.scene.add(opts.group);
 
 		opts.canvas = canvas;
-		opts['rgb2gif'] = rgb2gif;
 
 		opts.renderer = new THREE.CanvasRenderer({
 			canvas: canvas,
@@ -245,15 +244,6 @@ function ThreeDTexter(canvas, rgb2gif) {
 	};
 	
 	this.serve = function(width, height, frame, out, callback){
-
-		var encoder = child_process.spawn(opts['rgb2gif'], ['-s', width, height], {
-			stdio: ['pipe', 'pipe', process.stderr]});
-
-		encoder.stdout.pipe(out);
-
-		encoder.stdout.on('end', function() {
-			callback();
-		});
 
 		opts.mesh.rotation.x = 0;
 		opts.mesh.rotation.y = 0;
@@ -317,18 +307,9 @@ function ThreeDTexter(canvas, rgb2gif) {
 
 		opts.renderer.render(opts.scene, opts.camera);
 
-		var data = opts.canvas.getContext('2d').getImageData(0, 0, width, height).data;
-
-		var pixels = new Buffer(width * height * 3);
-
-		var count = 0;
-		for (var i = 0; i < height * width * 4; i += 4) {
-			pixels.writeUInt8(data[i], count++, true);
-			pixels.writeUInt8(data[i+1], count++, true);
-			pixels.writeUInt8(data[i+2], count++, true);
-		}
-
-		encoder.stdin.end(pixels);
+		out.write(new Buffer(opts.canvas.getContext('2d').getImageData(0, 0, width, height).data));
+		
+		callback();
 	};
 
 	this.reset = function() {
@@ -375,8 +356,8 @@ function ThreeDTexter(canvas, rgb2gif) {
 	};
 };
 
-var create = function(canvas, rgb2gif) {
-	return new ThreeDTexter(canvas, rgb2gif);
+var create = function(canvas) {
+	return new ThreeDTexter(canvas);
 };
 
 module.exports = create;
