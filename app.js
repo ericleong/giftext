@@ -32,7 +32,7 @@ var workerPool = [];
 // server routes
 
 app.get('/', function (req, res) {
-	res.redirect('/giftext.gif');
+	res.redirect('/giftext.tv.gif');
 });
 
 app.get('/:text.gif', function (req, res) {
