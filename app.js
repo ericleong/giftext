@@ -86,6 +86,20 @@ function render(res, text, width, height) {
 	gifsicle.stdout.pipe(res);
 	gifsicle.stdout.pipe(buffer);
 
+	gifsicle.stdout.on('error', function(err) {
+		res.status(500).send(err);
+
+		// notify subscribers
+		if (generating[text] && generating[text].length > 0) {
+			for (var listener in generating[text]) {
+				generating[text][listener](err);
+			}
+		}
+
+		// remove publisher
+		generating[text] = null;
+	});
+
 	gifsicle.stdout.on('end', function() {
 		var contents;
 
