@@ -16,16 +16,6 @@ var generating = {}; // pub/sub exposing pub existence
 var express = require('express');
 var app = express();
 
-// set up config
-var config = {};
-try {
-	config = require('./config.json');
-} catch (err) {
-	// do nothing
-}
-config['rgb2gif'] = config['rgb2gif'] === undefined ? 'rgb2gif' : config['rgb2gif'];
-config['gifsicle'] = config['gifsicle'] === undefined ? 'gifsicle' : config['gifsicle'];
-
 var numCPUs = require('os').cpus().length;
 var workerPool = [];
 
@@ -80,13 +70,13 @@ function render(res, text, width, height) {
 	res.setHeader('content-type', 'image/gif');
 	res.setHeader('transfer-encoding', 'chunked');
 
-	var gifsicle = child_process.spawn(config.gifsicle, 
-		['--multifile', '-d', '8', '--loopcount', '--colors', '256'], {
+	var imagemagick = child_process.spawn('C:\\Users\\Eric\\Downloads\\ImageMagick\\convert.exe', 
+		['-size', width + 'x' + height, '-depth', '8', 'rgba:-', '-layers', 'OptimizeFrame', '-set', 'delay', '8', 'gif:-'], {
 		stdio: ['pipe', 'pipe', process.stderr]});
-	gifsicle.stdout.pipe(res);
-	gifsicle.stdout.pipe(buffer);
+	imagemagick.stdout.pipe(res);
+	imagemagick.stdout.pipe(buffer);
 
-	gifsicle.stdout.on('end', function() {
+	imagemagick.stdout.on('end', function() {
 		var contents;
 
 		if (buffer && buffer.size() > 0) {
@@ -135,7 +125,7 @@ function render(res, text, width, height) {
 		if (!worker) {
 			worker = child_process.spawn(
 				'node',
-				['./worker.js', config['rgb2gif']],
+				['./worker.js'],
 				{
 					stdio: ['ipc', 'pipe', process.stderr]
 				}
@@ -157,11 +147,11 @@ function render(res, text, width, height) {
 			frame: frame
 		});
 	}, function(err, results) {
-
+		
 		for (var r = 0; r < results.length; r++) {
-			gifsicle.stdin.write(results[r]);
+			imagemagick.stdin.write(results[r]);
 		}
 
-		gifsicle.stdin.end();
+		imagemagick.stdin.end();
 	});
 }

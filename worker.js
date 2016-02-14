@@ -2,7 +2,7 @@
 
 var ThreeDTexter = require('./animator.js');
 var Canvas = require('canvas');
-var texter = ThreeDTexter(new Canvas(400, 150), process.argv[2]);
+var texter = ThreeDTexter(new Canvas(400, 150));
 
 process.on('message', function(message) {
 	texter.setColor(message.options.color.front, message.options.color.side, message.options.color.background, message.options.color.opaque);
