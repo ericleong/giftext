@@ -76,7 +76,22 @@ function render(res, text, width, height) {
 	imagemagick.stdout.pipe(res);
 	imagemagick.stdout.pipe(buffer);
 
+	imagemagick.stdout.on('error', function(err) {
+		res.status(500).send(err);
+
+		// notify subscribers
+		if (generating[text] && generating[text].length > 0) {
+			for (var listener in generating[text]) {
+				generating[text][listener](err);
+			}
+		}
+
+		// remove publisher
+		generating[text] = null;
+	});
+
 	imagemagick.stdout.on('end', function() {
+
 		var contents;
 
 		if (buffer && buffer.size() > 0) {
