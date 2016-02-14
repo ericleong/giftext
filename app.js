@@ -16,6 +16,15 @@ var generating = {}; // pub/sub exposing pub existence
 var express = require('express');
 var app = express();
 
+// set up config
+var config = {};
+try {
+	config = require('./config.json');
+} catch (err) {
+	// do nothing
+}
+config['imagemagick'] = config['imagemagick'] === undefined ? 'convert' : config['imagemagick'];
+
 var numCPUs = require('os').cpus().length;
 var workerPool = [];
 
@@ -70,7 +79,7 @@ function render(res, text, width, height) {
 	res.setHeader('content-type', 'image/gif');
 	res.setHeader('transfer-encoding', 'chunked');
 
-	var imagemagick = child_process.spawn('C:\\Users\\Eric\\Downloads\\ImageMagick\\convert.exe', 
+	var imagemagick = child_process.spawn(config.imagemagick, 
 		['-size', width + 'x' + height, '-depth', '8', 'rgba:-', '-layers', 'OptimizeFrame', '-set', 'delay', '8', 'gif:-'], {
 		stdio: ['pipe', 'pipe', process.stderr]});
 	imagemagick.stdout.pipe(res);
