@@ -96,7 +96,7 @@ function ThreeDTexter(canvas) {
 		});
 
 		var materials = [opts.text.options.sideMaterial, opts.text.options.textMaterial];
-		opts.text.options.material = new THREE.MeshFaceMaterial(materials);
+		opts.text.options.material = new THREE.MultiMaterial(materials);
 		
 		// cache alphanumeric characters
 		opts.text.alphanumeric = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -122,20 +122,12 @@ function ThreeDTexter(canvas) {
 			var width = 0;
 			var text3d = new THREE.Object3D();
 
-			// THREE.Font.size = opts.text.options.size;
-			// THREE.Font.divisions = opts.text.options.curveSegments;
-
-			// THREE.Font.face = opts.text.options.font;
-			// THREE.Font.weight = opts.text.options.weight;
-			// THREE.Font.style = opts.text.options.style;
-
 			for (var i = 0; i < text.length; i++) {
 
-				// var offset = THREE.Font.drawText(text[i]).offset;
-				var offset = 0;
-
 				if (text[i] == ' ') {
-					width += offset * 2;
+					var letter3d = opts.text.cache['n'];
+					letter3d.computeBoundingBox();
+					width += 0.5 * (letter3d.boundingBox.max.x - letter3d.boundingBox.min.x);
 
 					continue;
 				}
@@ -149,6 +141,8 @@ function ThreeDTexter(canvas) {
 				}
 				letter3d.computeBoundingBox();
 
+				var offset = 0.5 * (letter3d.boundingBox.max.x - letter3d.boundingBox.min.x);
+
 				opts.verticalOffset = -0.5 * (letter3d.boundingBox.max.y - letter3d.boundingBox.min.y);
 
 				var mesh = new THREE.Mesh(letter3d, opts.text.options.material);
@@ -160,6 +154,8 @@ function ThreeDTexter(canvas) {
 				for (var face in mesh.geometry.faces) {
 					if (mesh.geometry.faces[face].normal.z != 0) {
 						mesh.geometry.faces[face].materialIndex = 1;
+					} else {
+						mesh.geometry.faces[face].materialIndex = 0;
 					}
 				}
 
@@ -206,8 +202,7 @@ function ThreeDTexter(canvas) {
 				}
 			}
 
-			// var centerOffset = -THREE.Font.drawText(text).offset;
-			var centerOffset = 0;
+			var centerOffset = -0.5 * (text3d.boundingBox.max.x - text3d.boundingBox.min.x);
 
 			opts.width = Math.min(Math.max(0.5 * (text3d.boundingBox.max.x - text3d.boundingBox.min.x), 500), 1000);
 
@@ -218,6 +213,8 @@ function ThreeDTexter(canvas) {
 			for (var face in opts.mesh.geometry.faces) {
 				if (opts.mesh.geometry.faces[face].normal.z != 0) {
 					opts.mesh.geometry.faces[face].materialIndex = 1;
+				} else {
+					opts.mesh.geometry.faces[face].materialIndex = 0;
 				}
 			}
 
@@ -269,6 +266,8 @@ function ThreeDTexter(canvas) {
 			canvas: canvas,
 			alpha: true
 		});
+
+		opts.renderer.setSize(canvas.width, canvas.height, false);
 	};
 	
 	this.serve = function(width, height, frame, out, callback){
