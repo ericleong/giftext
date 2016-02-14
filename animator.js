@@ -273,7 +273,7 @@ function ThreeDTexter(canvas, rgb2gif) {
 	
 	this.serve = function(width, height, frame, out, callback){
 
-		var encoder = child_process.spawn(opts['rgb2gif'], ['-s', width, height], {
+		var encoder = child_process.spawn(opts['rgb2gif'], ['-1', '-s', width, height], {
 			stdio: ['pipe', 'pipe', process.stderr]});
 
 		encoder.stdout.pipe(out);
