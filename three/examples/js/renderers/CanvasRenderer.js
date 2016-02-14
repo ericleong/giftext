@@ -2,8 +2,6 @@
  * @author mrdoob / http://mrdoob.com/
  */
 
-var THREE = require('./Projector.js');
-
 THREE.SpriteCanvasMaterial = function ( parameters ) {
 
 	THREE.Material.call( this );
@@ -18,13 +16,13 @@ THREE.SpriteCanvasMaterial = function ( parameters ) {
 };
 
 THREE.SpriteCanvasMaterial.prototype = Object.create( THREE.Material.prototype );
+THREE.SpriteCanvasMaterial.prototype.constructor = THREE.SpriteCanvasMaterial;
 
 THREE.SpriteCanvasMaterial.prototype.clone = function () {
 
 	var material = new THREE.SpriteCanvasMaterial();
 
-	THREE.Material.prototype.clone.call( this, material );
-
+	material.copy( this );
 	material.color.copy( this.color );
 	material.program = this.program;
 
@@ -36,7 +34,7 @@ THREE.SpriteCanvasMaterial.prototype.clone = function () {
 
 THREE.CanvasRenderer = function ( parameters ) {
 
-	var smoothstep = THREE.Math.smoothstep;
+	console.log( 'THREE.CanvasRenderer', THREE.REVISION );
 
 	parameters = parameters || {};
 
@@ -58,12 +56,14 @@ THREE.CanvasRenderer = function ( parameters ) {
 	_viewportWidth = _canvasWidth,
 	_viewportHeight = _canvasHeight,
 
+	_pixelRatio = 1,
+
 	_context = _canvas.getContext( '2d', {
 		alpha: parameters.alpha === true
 	} ),
 
 	_clearColor = new THREE.Color( 0x000000 ),
-	_clearAlpha = 0,
+	_clearAlpha = parameters.alpha === true ? 0 : 1,
 
 	_contextGlobalAlpha = 1,
 	_contextGlobalCompositeOperation = 0,
@@ -112,21 +112,22 @@ THREE.CanvasRenderer = function ( parameters ) {
 	_normal = new THREE.Vector3(),
 	_normalViewMatrix = new THREE.Matrix3();
 
-	// set clear box size
-	_clearBox.min.set( 0, 0 );
-	_clearBox.max.set( _canvasWidth, _canvasHeight );
+	/* TODO
+	_canvas.mozImageSmoothingEnabled = false;
+	_canvas.webkitImageSmoothingEnabled = false;
+	_canvas.msImageSmoothingEnabled = false;
+	_canvas.imageSmoothingEnabled = false;
+	*/
 
 	// dash+gap fallbacks for Firefox and everything else
 
 	if ( _context.setLineDash === undefined ) {
 
-		_context.setLineDash = function () {}
+		_context.setLineDash = function () {};
 
 	}
 
 	this.domElement = _canvas;
-
-	this.devicePixelRatio = 1;
 
 	this.autoClear = true;
 	this.sortObjects = true;
@@ -141,17 +142,43 @@ THREE.CanvasRenderer = function ( parameters ) {
 
 		}
 
-	}
+	};
 
 	// WebGLRenderer compatibility
 
 	this.supportsVertexTextures = function () {};
 	this.setFaceCulling = function () {};
 
+	// API
+
+	this.getContext = function () {
+
+		return _context;
+
+	};
+
+	this.getContextAttributes = function () {
+
+		return _context.getContextAttributes();
+
+	};
+
+	this.getPixelRatio = function () {
+
+		return _pixelRatio;
+
+	};
+
+	this.setPixelRatio = function ( value ) {
+
+		if ( value !== undefined ) _pixelRatio = value;
+
+	};
+
 	this.setSize = function ( width, height, updateStyle ) {
 
-		_canvasWidth = width * this.devicePixelRatio;
-		_canvasHeight = height * this.devicePixelRatio;
+		_canvasWidth = width * _pixelRatio;
+		_canvasHeight = height * _pixelRatio;
 
 		_canvas.width = _canvasWidth;
 		_canvas.height = _canvasHeight;
@@ -166,7 +193,7 @@ THREE.CanvasRenderer = function ( parameters ) {
 
 		}
 
-		_clipBox.min.set( -_canvasWidthHalf, -_canvasHeightHalf ),
+		_clipBox.min.set( - _canvasWidthHalf, - _canvasHeightHalf );
 		_clipBox.max.set(   _canvasWidthHalf,   _canvasHeightHalf );
 
 		_clearBox.min.set( - _canvasWidthHalf, - _canvasHeightHalf );
@@ -186,24 +213,24 @@ THREE.CanvasRenderer = function ( parameters ) {
 
 	this.setViewport = function ( x, y, width, height ) {
 
-		_viewportX = x * this.devicePixelRatio;
-		_viewportY = y * this.devicePixelRatio;
+		_viewportX = x * _pixelRatio;
+		_viewportY = y * _pixelRatio;
 
-		_viewportWidth = width * this.devicePixelRatio;
-		_viewportHeight = height * this.devicePixelRatio;
+		_viewportWidth = width * _pixelRatio;
+		_viewportHeight = height * _pixelRatio;
 
 	};
 
 	this.setScissor = function () {};
-	this.enableScissorTest = function () {};
+	this.setScissorTest = function () {};
 
 	this.setClearColor = function ( color, alpha ) {
 
 		_clearColor.set( color );
 		_clearAlpha = alpha !== undefined ? alpha : 1;
 
-		_clearBox.min.set( 0, 0 );
-		_clearBox.max.set( _canvasWidth,   _canvasHeight );
+		_clearBox.min.set( - _canvasWidthHalf, - _canvasHeightHalf );
+		_clearBox.max.set(   _canvasWidthHalf,   _canvasHeightHalf );
 
 	};
 
@@ -234,21 +261,44 @@ THREE.CanvasRenderer = function ( parameters ) {
 
 	this.clear = function () {
 
-		// always clear
+		if ( _clearBox.isEmpty() === false ) {
 
-		if ( _clearAlpha > 0 ) {
+			_clearBox.intersect( _clipBox );
+			_clearBox.expandByScalar( 2 );
 
-			setBlending( THREE.NormalBlending );
-			setOpacity( 1 );
+			_clearBox.min.x = _clearBox.min.x + _canvasWidthHalf;
+			_clearBox.min.y =  - _clearBox.min.y + _canvasHeightHalf;		// higher y value !
+			_clearBox.max.x = _clearBox.max.x + _canvasWidthHalf;
+			_clearBox.max.y =  - _clearBox.max.y + _canvasHeightHalf;		// lower y value !
 
-			setFillStyle( 'rgba(' + Math.floor( _clearColor.r * 255 ) + ',' + Math.floor( _clearColor.g * 255 ) + ',' + Math.floor( _clearColor.b * 255 ) + ',' + _clearAlpha + ')' );
+			if ( _clearAlpha < 1 ) {
 
-			_context.fillRect(
-				_clearBox.min.x | 0,
-				_clearBox.min.y | 0,
-				( _clearBox.max.x - _clearBox.min.x ) | 0,
-				( _clearBox.max.y - _clearBox.min.y ) | 0
-			);
+				_context.clearRect(
+					_clearBox.min.x | 0,
+					_clearBox.max.y | 0,
+					( _clearBox.max.x - _clearBox.min.x ) | 0,
+					( _clearBox.min.y - _clearBox.max.y ) | 0
+				);
+
+			}
+
+			if ( _clearAlpha > 0 ) {
+
+				setBlending( THREE.NormalBlending );
+				setOpacity( 1 );
+
+				setFillStyle( 'rgba(' + Math.floor( _clearColor.r * 255 ) + ',' + Math.floor( _clearColor.g * 255 ) + ',' + Math.floor( _clearColor.b * 255 ) + ',' + _clearAlpha + ')' );
+
+				_context.fillRect(
+					_clearBox.min.x | 0,
+					_clearBox.max.y | 0,
+					( _clearBox.max.x - _clearBox.min.x ) | 0,
+					( _clearBox.min.y - _clearBox.max.y ) | 0
+				);
+
+			}
+
+			_clearBox.makeEmpty();
 
 		}
 
@@ -320,7 +370,7 @@ THREE.CanvasRenderer = function ( parameters ) {
 					_v2.positionScreen
 				] );
 
-				if ( _clipBox.isIntersectionBox( _elemBox ) === true ) {
+				if ( _clipBox.intersectsBox( _elemBox ) === true ) {
 
 					renderLine( _v1, _v2, element, material );
 
@@ -352,8 +402,11 @@ THREE.CanvasRenderer = function ( parameters ) {
 					_v3.positionScreen
 				] );
 
-				// render everything.
-				renderFace3( _v1, _v2, _v3, 0, 1, 2, element, material );
+				if ( _clipBox.intersectsBox( _elemBox ) === true ) {
+
+					renderFace3( _v1, _v2, _v3, 0, 1, 2, element, material );
+
+				}
 
 			}
 
@@ -363,7 +416,7 @@ THREE.CanvasRenderer = function ( parameters ) {
 			_context.strokeRect( _elemBox.min.x, _elemBox.min.y, _elemBox.max.x - _elemBox.min.x, _elemBox.max.y - _elemBox.min.y );
 			*/
 
-			// _clearBox.union( _elemBox );
+			_clearBox.union( _elemBox );
 
 		}
 
@@ -470,53 +523,42 @@ THREE.CanvasRenderer = function ( parameters ) {
 
 			var texture = material.map;
 
-			if ( texture !== null && texture.image !== undefined ) {
-
-				if ( texture.hasEventListener( 'update', onTextureUpdate ) === false ) {
-
-					if ( texture.image.width > 0 ) {
-
-						textureToPattern( texture );
-
-					}
-
-					texture.addEventListener( 'update', onTextureUpdate );
-
-				}
+			if ( texture !== null ) {
 
 				var pattern = _patterns[ texture.id ];
 
-				if ( pattern !== undefined ) {
+				if ( pattern === undefined || pattern.version !== texture.version ) {
 
-					setFillStyle( pattern );
-
-				} else {
-
-					setFillStyle( 'rgba( 0, 0, 0, 1 )' );
+					pattern = textureToPattern( texture );
+					_patterns[ texture.id ] = pattern;
 
 				}
 
-				//
+				if ( pattern.canvas !== undefined ) {
 
-				var bitmap = texture.image;
+					setFillStyle( pattern.canvas );
 
-				var ox = bitmap.width * texture.offset.x;
-				var oy = bitmap.height * texture.offset.y;
+					var bitmap = texture.image;
 
-				var sx = bitmap.width * texture.repeat.x;
-				var sy = bitmap.height * texture.repeat.y;
+					var ox = bitmap.width * texture.offset.x;
+					var oy = bitmap.height * texture.offset.y;
 
-				var cx = scaleX / sx;
-				var cy = scaleY / sy;
+					var sx = bitmap.width * texture.repeat.x;
+					var sy = bitmap.height * texture.repeat.y;
 
-				_context.save();
-				_context.translate( v1.x, v1.y );
-				if ( material.rotation !== 0 ) _context.rotate( material.rotation );
-				_context.translate( - scaleX / 2, - scaleY / 2 );
-				_context.scale( cx, cy );
-				_context.translate( - ox, - oy );
-				_context.fillRect( ox, oy, sx, sy );
-				_context.restore();
+					var cx = scaleX / sx;
+					var cy = scaleY / sy;
+
+					_context.save();
+					_context.translate( v1.x, v1.y );
+					if ( material.rotation !== 0 ) _context.rotate( material.rotation );
+					_context.translate( - scaleX / 2, - scaleY / 2 );
+					_context.scale( cx, cy );
+					_context.translate( - ox, - oy );
+					_context.fillRect( ox, oy, sx, sy );
+					_context.restore();
+
+				}
 
 			} else {
 
@@ -678,7 +720,9 @@ THREE.CanvasRenderer = function ( parameters ) {
 
 			if ( material.map !== null ) {
 
-				if ( material.map.mapping instanceof THREE.UVMapping ) {
+				var mapping = material.map.mapping;
+
+				if ( mapping === THREE.UVMapping ) {
 
 					_uvs = element.uvs;
 					patternPath( _v1x, _v1y, _v2x, _v2y, _v3x, _v3y, _uvs[ uv1 ].x, _uvs[ uv1 ].y, _uvs[ uv2 ].x, _uvs[ uv2 ].y, _uvs[ uv3 ].x, _uvs[ uv3 ].y, material.map );
@@ -687,7 +731,7 @@ THREE.CanvasRenderer = function ( parameters ) {
 
 			} else if ( material.envMap !== null ) {
 
-				if ( material.envMap.mapping instanceof THREE.SphericalReflectionMapping ) {
+				if ( material.envMap.mapping === THREE.SphericalReflectionMapping ) {
 
 					_normal.copy( element.vertexNormalsModel[ uv1 ] ).applyMatrix3( _normalViewMatrix );
 					_uv1x = 0.5 * _normal.x + 0.5;
@@ -703,24 +747,7 @@ THREE.CanvasRenderer = function ( parameters ) {
 
 					patternPath( _v1x, _v1y, _v2x, _v2y, _v3x, _v3y, _uv1x, _uv1y, _uv2x, _uv2y, _uv3x, _uv3y, material.envMap );
 
-				} else if ( material.envMap.mapping instanceof THREE.SphericalRefractionMapping ) {
-
-					_normal.copy( element.vertexNormalsModel[ uv1 ] ).applyMatrix3( _normalViewMatrix );
-					_uv1x = - 0.5 * _normal.x + 0.5;
-					_uv1y = - 0.5 * _normal.y + 0.5;
-
-					_normal.copy( element.vertexNormalsModel[ uv2 ] ).applyMatrix3( _normalViewMatrix );
-					_uv2x = - 0.5 * _normal.x + 0.5;
-					_uv2y = - 0.5 * _normal.y + 0.5;
-
-					_normal.copy( element.vertexNormalsModel[ uv3 ] ).applyMatrix3( _normalViewMatrix );
-					_uv3x = - 0.5 * _normal.x + 0.5;
-					_uv3y = - 0.5 * _normal.y + 0.5;
-
-					patternPath( _v1x, _v1y, _v2x, _v2y, _v3x, _v3y, _uv1x, _uv1y, _uv2x, _uv2y, _uv3x, _uv3y, material.envMap );
-
 				}
-
 
 			} else {
 
@@ -737,14 +764,6 @@ THREE.CanvasRenderer = function ( parameters ) {
 					 : fillPath( _color );
 
 			}
-
-		} else if ( material instanceof THREE.MeshDepthMaterial ) {
-
-			_color.r = _color.g = _color.b = 1 - smoothstep( v1.positionScreen.z * v1.positionScreen.w, _camera.near, _camera.far );
-
-			material.wireframe === true
-					 ? strokePath( _color, material.wireframeLinewidth, material.wireframeLinecap, material.wireframeLinejoin )
-					 : fillPath( _color );
 
 		} else if ( material instanceof THREE.MeshNormalMaterial ) {
 
@@ -800,20 +819,29 @@ THREE.CanvasRenderer = function ( parameters ) {
 
 	}
 
-	function onTextureUpdate ( event ) {
-
-		textureToPattern( event.target );
-
-	}
-
 	function textureToPattern( texture ) {
 
-		if ( texture instanceof THREE.CompressedTexture ) return;
+		if ( texture.version === 0 ||
+			texture instanceof THREE.CompressedTexture ||
+			texture instanceof THREE.DataTexture ) {
 
-		var repeatX = texture.wrapS === THREE.RepeatWrapping;
-		var repeatY = texture.wrapT === THREE.RepeatWrapping;
+			return {
+				canvas: undefined,
+				version: texture.version
+			};
+
+		}
 
 		var image = texture.image;
+
+		if ( image.complete === false ) {
+
+			return {
+				canvas: undefined,
+				version: 0
+			};
+
+		}
 
 		var canvas = document.createElement( 'canvas' );
 		canvas.width = image.width;
@@ -823,45 +851,55 @@ THREE.CanvasRenderer = function ( parameters ) {
 		context.setTransform( 1, 0, 0, - 1, 0, image.height );
 		context.drawImage( image, 0, 0 );
 
-		_patterns[ texture.id ] = _context.createPattern(
-			canvas, repeatX === true && repeatY === true
-				 ? 'repeat'
-				 : repeatX === true && repeatY === false
-					 ? 'repeat-x'
-					 : repeatX === false && repeatY === true
-						 ? 'repeat-y'
-						 : 'no-repeat'
-		);
+		var repeatX = texture.wrapS === THREE.RepeatWrapping;
+		var repeatY = texture.wrapT === THREE.RepeatWrapping;
+
+		var repeat = 'no-repeat';
+
+		if ( repeatX === true && repeatY === true ) {
+
+			repeat = 'repeat';
+
+		} else if ( repeatX === true ) {
+
+			repeat = 'repeat-x';
+
+		} else if ( repeatY === true ) {
+
+			repeat = 'repeat-y';
+
+		}
+
+		var pattern = _context.createPattern( canvas, repeat );
+
+		if ( texture.onUpdate ) texture.onUpdate( texture );
+
+		return {
+			canvas: pattern,
+			version: texture.version
+		};
 
 	}
 
 	function patternPath( x0, y0, x1, y1, x2, y2, u0, v0, u1, v1, u2, v2, texture ) {
 
-		if ( texture instanceof THREE.DataTexture ) return;
+		var pattern = _patterns[ texture.id ];
 
-		if ( texture.hasEventListener( 'update', onTextureUpdate ) === false ) {
+		if ( pattern === undefined || pattern.version !== texture.version ) {
 
-			if ( texture.image !== undefined && texture.image.width > 0 ) {
-
-				textureToPattern( texture );
-
-			}
-
-			texture.addEventListener( 'update', onTextureUpdate );
+			pattern = textureToPattern( texture );
+			_patterns[ texture.id ] = pattern;
 
 		}
 
-		var pattern = _patterns[ texture.id ];
+		if ( pattern.canvas !== undefined ) {
 
-		if ( pattern !== undefined ) {
-
-			setFillStyle( pattern );
+			setFillStyle( pattern.canvas );
 
 		} else {
 
-			setFillStyle( 'rgba(0,0,0,1)' );
+			setFillStyle( 'rgba( 0, 0, 0, 1)' );
 			_context.fill();
-
 			return;
 
 		}
@@ -1074,5 +1112,3 @@ THREE.CanvasRenderer = function ( parameters ) {
 	}
 
 };
-
-module.exports = THREE;

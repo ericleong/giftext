@@ -1,13 +1,39 @@
 /// <reference path="typings/node/node.d.ts"/>
 'use strict';
 
-if (typeof THREE === 'undefined') {
-	var THREE = require('./three/CanvasRenderer.js');
-	// this is a modified helvetiker
-	THREE.FontUtils.loadFace(require('./three/font/helvetiker_regular.typeface.js'));
-}
-
+var vm = require('vm');
+var fs = require('fs');
+global.THREE = require('three');
 var child_process = require('child_process');
+
+vm.runInThisContext(fs.readFileSync('./three/examples/js/renderers/Projector.js', 'utf-8'));
+vm.runInThisContext(fs.readFileSync('./three/examples/js/renderers/CanvasRenderer.js', 'utf-8'));
+vm.runInThisContext(fs.readFileSync('./three/src/extras/core/Curve.js', 'utf-8'));
+vm.runInThisContext(fs.readFileSync('./three/src/extras/core/CurvePath.js', 'utf-8'));
+vm.runInThisContext(fs.readFileSync('./three/src/extras/core/Font.js', 'utf-8'));
+vm.runInThisContext(fs.readFileSync('./three/src/extras/core/Path.js', 'utf-8'));
+vm.runInThisContext(fs.readFileSync('./three/src/extras/core/Shape.js', 'utf-8'));
+vm.runInThisContext(fs.readFileSync('./three/src/extras/curves/ArcCurve.js', 'utf-8'));
+vm.runInThisContext(fs.readFileSync('./three/src/extras/curves/CatmullRomCurve3.js', 'utf-8'));
+vm.runInThisContext(fs.readFileSync('./three/src/extras/curves/ClosedSplineCurve3.js', 'utf-8'));
+vm.runInThisContext(fs.readFileSync('./three/src/extras/curves/CubicBezierCurve.js', 'utf-8'));
+vm.runInThisContext(fs.readFileSync('./three/src/extras/curves/CubicBezierCurve3.js', 'utf-8'));
+vm.runInThisContext(fs.readFileSync('./three/src/extras/curves/EllipseCurve.js', 'utf-8'));
+vm.runInThisContext(fs.readFileSync('./three/src/extras/curves/LineCurve.js', 'utf-8'));
+vm.runInThisContext(fs.readFileSync('./three/src/extras/curves/LineCurve3.js', 'utf-8'));
+vm.runInThisContext(fs.readFileSync('./three/src/extras/curves/QuadraticBezierCurve.js', 'utf-8'));
+vm.runInThisContext(fs.readFileSync('./three/src/extras/curves/QuadraticBezierCurve3.js', 'utf-8'));
+vm.runInThisContext(fs.readFileSync('./three/src/extras/curves/SplineCurve.js', 'utf-8'));
+vm.runInThisContext(fs.readFileSync('./three/src/extras/curves/SplineCurve3.js', 'utf-8'));
+vm.runInThisContext(fs.readFileSync('./three/src/extras/ShapeUtils.js', 'utf-8'));
+vm.runInThisContext(fs.readFileSync('./three/src/extras/geometries/ExtrudeGeometry.js', 'utf-8'));
+vm.runInThisContext(fs.readFileSync('./three/src/extras/geometries/TubeGeometry.js', 'utf-8'));
+vm.runInThisContext(fs.readFileSync('./three/src/extras/geometries/TextGeometry.js', 'utf-8'));
+vm.runInThisContext(fs.readFileSync('./three/examples/js/utils/GeometryUtils.js', 'utf-8'));
+
+// this is a modified helvetiker
+var fontFile = fs.readFileSync('./three/examples/fonts/helvetiker_regular.typeface.js', 'utf-8')
+var font = new THREE.Font(JSON.parse(fontFile.substring(65, fontFile.length - 2)));
 
 function ThreeDTexter(canvas, rgb2gif) {
 
@@ -24,7 +50,7 @@ function ThreeDTexter(canvas, rgb2gif) {
 				hover: 10,
 				curveSegments: 4,
 				bevelEnabled: false,
-				font: 'helvetiker',
+				font: font,
 				weight: 'normal',
 				style: 'normal',
 				textColor: 0x3f6375,
@@ -57,7 +83,7 @@ function ThreeDTexter(canvas, rgb2gif) {
 			shading: THREE.FlatShading,
 			specular: 0x222222,
 			shininess: 50,
-			ambient: opts.text.options.textColor,
+			// ambient: opts.text.options.textColor,
 			overdraw: 0.4
 		});
 		opts.text.options.sideMaterial = new THREE.MeshPhongMaterial({
@@ -65,7 +91,7 @@ function ThreeDTexter(canvas, rgb2gif) {
 			shading: THREE.SmoothShading,
 			specular: 0x222222,
 			shininess: 50,
-			ambient: opts.text.options.sideColor,
+			// ambient: opts.text.options.sideColor,
 			overdraw: 0.4
 		});
 
@@ -96,16 +122,17 @@ function ThreeDTexter(canvas, rgb2gif) {
 			var width = 0;
 			var text3d = new THREE.Object3D();
 
-			THREE.FontUtils.size = opts.text.options.size;
-			THREE.FontUtils.divisions = opts.text.options.curveSegments;
+			// THREE.Font.size = opts.text.options.size;
+			// THREE.Font.divisions = opts.text.options.curveSegments;
 
-			THREE.FontUtils.face = opts.text.options.font;
-			THREE.FontUtils.weight = opts.text.options.weight;
-			THREE.FontUtils.style = opts.text.options.style;
+			// THREE.Font.face = opts.text.options.font;
+			// THREE.Font.weight = opts.text.options.weight;
+			// THREE.Font.style = opts.text.options.style;
 
 			for (var i = 0; i < text.length; i++) {
 
-				var offset = THREE.FontUtils.drawText(text[i]).offset;
+				// var offset = THREE.Font.drawText(text[i]).offset;
+				var offset = 0;
 
 				if (text[i] == ' ') {
 					width += offset * 2;
@@ -179,7 +206,8 @@ function ThreeDTexter(canvas, rgb2gif) {
 				}
 			}
 
-			var centerOffset = -THREE.FontUtils.drawText(text).offset;
+			// var centerOffset = -THREE.Font.drawText(text).offset;
+			var centerOffset = 0;
 
 			opts.width = Math.min(Math.max(0.5 * (text3d.boundingBox.max.x - text3d.boundingBox.min.x), 500), 1000);
 
