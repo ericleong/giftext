@@ -86,7 +86,7 @@ function render(res, text, width, height) {
 	gifsicle.stdout.pipe(res);
 	gifsicle.stdout.pipe(buffer);
 
-	gifsicle.stdout.on('error', function(err) {
+	gifsicle.stdin.on('error', function(err) {
 		res.status(500).send(err);
 
 		// notify subscribers
@@ -135,16 +135,17 @@ function render(res, text, width, height) {
 	};
 
 	var frames = [];
+	var buffers = [];
 
 	for (var frame = 0; frame <= 23; frame++) {
 		frames.push(frame);
+		buffers.push(new streamBuffers.WritableStreamBuffer({
+			initialSize: 200 * 1024
+		}));
 	}
 
 	async.mapLimit(frames, numCPUs, function(frame, callback) {
 		var worker = workerPool.shift();
-		var buffer = new streamBuffers.WritableStreamBuffer({
-			initialSize: 200 * 1024
-		});
 
 		if (!worker) {
 			worker = child_process.spawn(
@@ -156,12 +157,12 @@ function render(res, text, width, height) {
 			);
 		}
 
-		worker.stdout.pipe(buffer);
+		worker.stdout.pipe(buffers[frame]);
 
 		var listener = function(response) {
 			worker.removeListener('message', listener);
 			workerPool.push(worker);
-			callback(null, buffer.getContents());
+			callback(null, buffers[frame].getContents());
 		};
 
 		worker.on('message', listener);
