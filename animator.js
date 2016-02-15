@@ -278,7 +278,7 @@ function ThreeDTexter(canvas, rgb2gif) {
 
 		encoder.stdout.pipe(out);
 
-		encoder.stdout.on('end', function() {
+		encoder.stdout.once('end', function() {
 			callback();
 		});
 

@@ -26,8 +26,14 @@ try {
 config['rgb2gif'] = config['rgb2gif'] === undefined ? 'rgb2gif' : config['rgb2gif'];
 config['gifsicle'] = config['gifsicle'] === undefined ? 'gifsicle' : config['gifsicle'];
 
+// prepare workers
+
 var numCPUs = require('os').cpus().length;
 var workerPool = [];
+
+for (var i = 0; i <= numCPUs; i++) {
+	workerPool[i] = spawn();
+}
 
 // server routes
 
@@ -77,6 +83,16 @@ function cancel(res, text, generating) {
 	generating[text] = null;
 }
 
+function spawn() {
+	return child_process.spawn(
+		'node',
+		['./worker.js', config['rgb2gif']],
+		{
+			stdio: ['ipc', 'pipe', process.stderr]
+		}
+	);
+}
+
 function render(res, text, width, height) {
 
 	generating[text] = [];
@@ -102,14 +118,14 @@ function render(res, text, width, height) {
 	gifsicle.stdout.pipe(res);
 	gifsicle.stdout.pipe(buffer);
 
-	gifsicle.stdin.on('error', function() {
+	gifsicle.stdin.once('error', function() {
 		cancel(res, text, generating);
 	});
-	gifsicle.stdout.on('error', function() {
+	gifsicle.stdout.once('error', function() {
 		cancel(res, text, generating);
 	});
 
-	gifsicle.stdout.on('end', function() {
+	gifsicle.stdout.once('end', function() {
 		var contents;
 
 		if (buffer && buffer.size() > 0) {
@@ -157,24 +173,18 @@ function render(res, text, width, height) {
 		var worker = workerPool.shift();
 
 		if (!worker) {
-			worker = child_process.spawn(
-				'node',
-				['./worker.js', config['rgb2gif']],
-				{
-					stdio: ['ipc', 'pipe', process.stderr]
-				}
-			);
+			worker = spawn();
 		}
 
 		worker.stdout.pipe(buffers[frame]);
 
 		var listener = function(response) {
-			worker.removeListener('message', listener);
+			worker.stdout.unpipe();
 			workerPool.push(worker);
 			callback(null, buffers[frame].getContents());
 		};
 
-		worker.on('message', listener);
+		worker.once('message', listener);
 
 		worker.send({
 			options: options,
