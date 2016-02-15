@@ -4,6 +4,25 @@
   "repository": "https://github.com/ericleong/giftext",
   "logo": "http://giftext.tv/giftext.gif",
   "website": "http://giftext.tv",
-  "addons": ["memcachier"],
-  "keywords": ["node", "express", "gif", "animated text"]
+  "success_url": "/edit%20the%20url.gif",
+  "addons": [
+    "memcachier"
+  ],
+  "keywords": [
+    "node",
+    "express",
+    "gif",
+    "animated text"
+  ],
+  "buildpacks": [
+    {
+      "url": "https://github.com/mojodna/heroku-buildpack-cairo.git"
+    },
+    {
+      "url": "https://github.com/jc4p/heroku-buildpack-gifsicle.git"
+    },
+    {
+      "url": "https://github.com/heroku/heroku-buildpack-nodejs.git"
+    }
+  ]
 }
