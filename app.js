@@ -48,17 +48,33 @@ var server = app.listen(process.env.PORT || 8080);
 function gif(res, text) {
 	client.get(text, function(err, val) {
 		if (val) {
-			res.setHeader('content-type', 'image/gif');
+			res.setHeader('Content-Type', 'image/gif');
 			res.end(val);
 		} else if (generating[text]) {
 			generating[text].push(function(result) {
-				res.setHeader('content-type', 'image/gif');
+				res.setHeader('Content-Type', 'image/gif');
 				res.end(result);
 			});
 		} else {
 			render(res, text, 400, 150);
 		}
 	});
+}
+
+function cancel(res, text, generating) {
+	res.status(500).removeHeader('Transfer-Encoding');
+	res.setHeader('Content-Type', 'text/plain');
+	res.send('oh no, something has gone wrong :(');
+
+	// notify subscribers
+	if (generating[text] && generating[text].length > 0) {
+		for (var listener in generating[text]) {
+			generating[text][listener](err);
+		}
+	}
+
+	// remove publisher
+	generating[text] = null;
 }
 
 function render(res, text, width, height) {
@@ -77,8 +93,8 @@ function render(res, text, width, height) {
 	var side = Color().hsv((hue + 30 * Math.random() + 165) % 360, 80, 80);
 
 	// stream the results as they are available
-	res.setHeader('content-type', 'image/gif');
-	res.setHeader('transfer-encoding', 'chunked');
+	res.setHeader('Content-Type', 'image/gif');
+	res.setHeader('Transfer-Encoding', 'chunked');
 
 	var gifsicle = child_process.spawn(config.gifsicle, 
 		['--multifile', '-d', '8', '--loopcount', '--colors', '256'], {
@@ -86,18 +102,11 @@ function render(res, text, width, height) {
 	gifsicle.stdout.pipe(res);
 	gifsicle.stdout.pipe(buffer);
 
-	gifsicle.stdin.on('error', function(err) {
-		res.status(500).send(err);
-
-		// notify subscribers
-		if (generating[text] && generating[text].length > 0) {
-			for (var listener in generating[text]) {
-				generating[text][listener](err);
-			}
-		}
-
-		// remove publisher
-		generating[text] = null;
+	gifsicle.stdin.on('error', function() {
+		cancel(res, text, generating);
+	});
+	gifsicle.stdout.on('error', function() {
+		cancel(res, text, generating);
 	});
 
 	gifsicle.stdout.on('end', function() {
